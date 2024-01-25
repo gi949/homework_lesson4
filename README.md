@@ -7,8 +7,14 @@ export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)
 
 Ввести в консоли команды: 
-Инициализация terraform terraform init 
-Проверка сценария terraform terraform plan
+
+Инициализация terraform 
+
+terraform init 
+
+Проверка сценария 
+
+terraform terraform plan
 
 Будут созданы ВМ:
 
@@ -30,6 +36,7 @@ terraform apply
 В файле ya.yaml ввести external_ip_address для ВМ web1, web2, bs1, bs2 и db 
 
 Проверить доступность ВМ с помощью модуля 
+
 ping ansible all -m ping 
 
 В файле all групповых переменных в group_vars/ ввести internal_ip_address_vm_... для ВМ bs1, bs2 и db1, 
@@ -38,9 +45,6 @@ ping ansible all -m ping
 Также ввести external_ip_address и internal_ip_address для ВМ db, bs1 и bs2, а также iqn портала iscsi и пароль кластера psc.
 
 В файлах lb1 и lb2 в папке host_vars/ ввести внутренние ip - internal_ip_address_vm_... bs1 и bs2 для настройки балансировки.
-
-Проверить корректность синтаксиса плэйбука main.yaml 
-ansible-playbook --syntax-check main.yaml
 
 Роль pcs_start выполняет установку ПО на bs1 и bs2, создание и настройку pacemaker кластера,
 
