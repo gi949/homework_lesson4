@@ -24,10 +24,41 @@ db на которой развернута БД mysql, а также будет
 
 В файле ya.yaml ввести external_ip_address для ВМ web1, web2, bs1, bs2 и db1 
 Проверить доступность ВМ с помощью модуля ping ansible all -m ping
+В файлах lb1 и lb2 в папке host_vars/ ввести внутренние ip - internal_ip_address_vm_... bs1 и bs2 для настройки балансировки.
+
+Проверить корректность синтаксиса плэйбука main.yaml ansible-playbook --syntax-check main.yaml
+
+Роль pcs_start выполняет установку ПО на web1, web2 и web3, создание и настройку pacemaker кластера,
+
+а также настройку iqn на web1, web2 и web3
+
+Роль target_start выполняет настройку портала iscsi на ВМ gfs
+
+Роль gfs2_start выполняет настройку ФС gfs2 на web1, web2 и web3
 
 В файле all групповых переменных в group_vars/ ввести internal_ip_address_vm_... для ВМ bs1, bs2 и db1, 
 а также название базы, пользователя и пароль, а также домен для настройки wordpress.
 
 Также ввести external_ip_address и internal_ip_address для ВМ db, bs1 и bs2, а также iqn портала iscsi и пароль кластера psc.
+
+Проверить корректность синтаксиса плэйбука main.yaml
+
+ansible-playbook --syntax-check main.yaml
+
+Роль pcs_start выполняет установку ПО на bs1 и bs2, создание и настройку pacemaker кластера,
+
+а также настройку iqn на bs1 и bs2
+
+Роль target_start выполняет настройку портала iscsi на ВМ db
+
+Роль gfs2_start выполняет настройку ФС gfs2 на bs1 и bs2
+
+Роль db_ins выполняет установку и рзвертывание mysql 
+Роль bs_ins выполняет установку и рзвертывание php-fpm, nginx и wordpress 
+Роль web_ins выполняет настройку балансировщика с nginx
+
+Запускаем playbook на выполнение
+
+ansible-playbook main.yaml
 
 
