@@ -27,8 +27,7 @@ db на которой развернута БД mysql, а также будет
 
 В файле all групповых переменных в group_vars/ ввести internal_ip_address_vm_... для ВМ bs1, bs2 и db1, 
 а также название базы, пользователя и пароль, а также домен для настройки wordpress.
-Также ввести external_ip_address и internal_ip_address
 
-для ВМ db, bs1 и bs2, а также iqn портала iscsi и пароль кластера psc.
+Также ввести external_ip_address и internal_ip_address для ВМ db, bs1 и bs2, а также iqn портала iscsi и пароль кластера psc.
 
 
