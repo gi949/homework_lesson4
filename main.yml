@@ -1,0 +1,36 @@
+---
+- name: cluster install
+  hosts: web
+  become: true
+  roles:
+    - pcs_start
+
+- name: target install
+  hosts: gfs
+  become: true
+  roles:
+    - target_start
+
+- name: cluster prepare
+  hosts: web
+  become: true
+  roles:
+    - gfs2_start
+
+- name: db install
+  hosts: db
+  become: true
+  roles:
+    - db_ins
+
+- name: bs install
+  hosts: bs
+  become: true  
+  roles:
+    - bs_ins
+
+- name: cluster prepare
+  hosts: lb
+  become: true
+  roles:
+    - web_ins

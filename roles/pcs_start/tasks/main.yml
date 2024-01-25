@@ -1,0 +1,65 @@
+---
+
+- name: Install packages
+  yum: name={{ item }} state=present
+  with_items:
+    - pacemaker 
+    - pcs 
+    - fence-agents-all
+    - gfs2-utils 
+    - lvm2-cluster 
+    - iscsi-initiator-utils
+    
+- name: edit hosts
+  blockinfile:
+    path: /etc/hosts
+    block: |
+      {{ node1_ip }} node-1
+      {{ node2_ip }} node-2
+
+- name: Set password for local hacluster user
+  user:
+    name: "hacluster"
+    password: "{{ pcs_password | password_hash('sha512') }}" 
+    state: present
+    update_password: always
+    create_home: yes
+  notify: "restart pcsd"
+  no_log: true
+
+- name: Enable Pacemaker service
+  systemd:
+    name: pcsd.service
+    state: started
+    enabled: true
+
+- name: Configuring cluster (step 1)
+  shell: pcs cluster auth node-1 node-2 -u hacluster -p {{ pcs_password }}
+  run_once: true
+
+- name: Configuring cluster (step 2)
+  shell: pcs cluster setup --name otuscluster node-1 node-2
+  run_once: true
+  ignore_errors: yes
+
+- name: Configuring cluster (step 3)
+  shell: pcs cluster enable --all 
+  run_once: true
+
+- name: Configuring cluster (step 4)
+  shell: pcs cluster start --all
+  run_once: true
+
+- name: setting iqn web1
+  copy:
+    src: node1
+    dest: /etc/iscsi/initiatorname.iscsi
+  delegate_to: "{{ node1_ipe }}"
+
+- name: setting iqn web2
+  copy:
+    src: node2
+    dest: /etc/iscsi/initiatorname.iscsi
+  delegate_to: "{{ node2_ipe }}"
+
+

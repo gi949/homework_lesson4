@@ -1,0 +1,24 @@
+---
+
+- name: instal nginx
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+
+- name: instal nginx
+  ansible.builtin.yum:
+    name: nginx
+    state: present
+#    disable_gpg_check: true
+
+- name: Copy nginx configuration
+  template: 
+    src: server.conf
+    dest: /etc/nginx/conf.d/server.conf
+  notify: restart nginx
+
+- name: Copy nginx configuration
+  template: 
+    src: upstream.conf.j2
+    dest: /etc/nginx/conf.d/upstream.conf
+  notify: restart nginx

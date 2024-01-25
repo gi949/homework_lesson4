@@ -1,0 +1,106 @@
+---
+
+  - name: download remi-mysql repo
+    get_url: 
+      url: https://repo.mysql.com//mysql57-community-release-el7-11.noarch.rpm
+      dest: /tmp/mysql57-community-release-el7-11.noarch.rpm
+
+  - name: instal repo
+    ansible.builtin.yum:
+      name: /tmp/mysql57-community-release-el7-11.noarch.rpm
+      state: present
+
+  - name: instal package db
+    ansible.builtin.yum:
+      name: mysql-community-server
+      state: present
+      disable_gpg_check: true
+
+  - name: start db
+    ansible.builtin.systemd_service:
+      name: mysqld
+      state: started
+      enabled: true
+
+  - name: instal other pakeges
+    ansible.builtin.yum:
+      name: "{{ item }}"
+      state: present
+      disable_gpg_check: true
+    with_items:
+      - gcc-c++
+      - MySQL-python
+      - mysql-community-client.x86_64
+
+  - name: Check that the somefile.conf exists
+    stat:
+      path: /root/.my.cnf
+    register: stat_result
+
+  - name: Add server strings
+    ansible.builtin.lineinfile:
+      path: "/etc/my.cnf"
+      line: validate_password_special_char_count=0
+    when: not stat_result.stat.exists
+
+  - name: start db
+    ansible.builtin.systemd_service:
+      name: mysqld
+      state: restarted
+
+  - name: Acquire temporary root password
+    shell: "awk -F': ' '$0 ~ \"temporary password\"{print $2}' /var/log/mysqld.log"
+    register: mysql_root_password_temp
+
+  - name: Set new root password from default temporary password
+    shell: "mysql -e \"SET PASSWORD = 'W2BzcIto3uZ0';\"
+           --connect-expired-password -uroot -p'{{ mysql_root_password_temp.stdout }}'
+           && touch /root/.my.password.changed"
+    args:
+      creates: /root/.my.password.changed
+
+#  - name: Ensure root can login into MySQL localhost
+#    shell: "mysql -e \"CREATE USER 'root'@'{{ item }}';\" 
+#           -uroot -p'W2BzcIto3uZ0'"
+#    with_items:
+#      - ::1
+#      - 127.0.0.1
+#      - localhost
+#    ignore_errors: yes
+
+  - name: Create/update my.cnf for root user
+    template:
+      src: my.cnf.j2
+      dest: /root/.my.cnf
+      owner: root
+      group: root
+      mode: 0600
+
+  - name: select query UNINSTALL PLUGIN
+    community.mysql.mysql_query:
+      login_db: mysql
+      query: UNINSTALL PLUGIN validate_password;
+    ignore_errors: yes
+
+  - name: del server strings
+    ansible.builtin.lineinfile:
+      path: "/etc/my.cnf"
+      line: 'validate_password_special_char_count=0'
+      state: absent
+    ignore_errors: yes
+
+
+  - name: create db wp
+    community.mysql.mysql_db:
+#      login_user: root
+#      login_password: 
+      name: "{{ wp_db_name }}"
+      state: present
+#      collation: utf8mb4_general_ci
+
+  - name: create db user
+    community.mysql.mysql_query:
+      login_db: mysql
+      query: GRANT ALL ON {{ wp_db_user }}.* TO '{{ wp_db_name }}'@'%' IDENTIFIED BY '{{ wp_db_password }}';;
+    ignore_errors: yes
+    

@@ -1,0 +1,40 @@
+---
+
+- name: Install packages
+  yum: name={{ item }} state=present
+  with_items:
+    - targetcli
+    
+- name: Enable target service
+  systemd:
+    name: target
+    state: started
+    enabled: true
+
+- name: Create disk
+  shell: targetcli /backstores/block create disk1 /dev/vdb
+  ignore_errors: yes
+
+- name: Create portal
+  shell: targetcli /iscsi/ create iqn.2023-12.ru.otus:storage.target00
+  ignore_errors: yes
+
+- name: Create lun
+  shell: targetcli /iscsi/iqn.2023-12.ru.otus:storage.target00/tpg1/luns create /backstores/block/disk1
+  ignore_errors: yes
+
+- name: Create acl for web1
+  shell: targetcli /iscsi/iqn.2023-12.ru.otus:storage.target00/tpg1/acls create iqn.2023-12.ru.otus:web1
+  ignore_errors: yes
+
+- name: Create acl for web2
+  shell: targetcli /iscsi/iqn.2023-12.ru.otus:storage.target00/tpg1/acls create iqn.2023-12.ru.otus:web2
+  ignore_errors: yes
+
+- name: Create acl for web3
+  shell: targetcli saveconfig
+
+- name: Enable target service
+  systemd:
+    name: target
+    state: restarted

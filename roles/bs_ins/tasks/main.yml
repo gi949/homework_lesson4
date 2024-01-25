@@ -1,0 +1,115 @@
+---
+- name: desable selinux
+  command: setenforce 0
+  ignore_errors: yes
+
+- name: instal prepakeges
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+#    disable_gpg_check: true
+  with_items:
+    - epel-release
+    - yum-utils
+    - nginx
+
+- name: download remi repo
+  get_url: 
+    url: http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    dest: /tmp/remi-release-7.rpm
+
+- name: instal repo remi
+  ansible.builtin.yum:
+    name: /tmp/remi-release-7.rpm
+    state: present
+
+- name: enable epel repository
+  command: yum-config-manager --enable remi-php72
+  ignore_errors: yes
+
+- name: create dir wordpress
+  file:
+    path: "/mnt/gfs2/{{ server_hostname }}"
+    state: directory
+    owner: nginx
+    group: nginx
+
+#- name: yum | enable epel repository
+#  ansible.builtin.yum_repository:
+#    name: remi-php72
+#    enabled: yes
+
+- name: instal prepakeges
+  ansible.builtin.yum:
+    name: "{{ item }}"
+    state: present
+    disable_gpg_check: true
+  with_items:
+    - php-cli
+    - php-fpm
+    - php-mysql
+    - php-json
+    - php-opcache
+    - php-mbstring
+    - php-xml
+    - php-gd
+    - php-curl
+
+- name: Enable php service
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: true
+
+- name: Enable nginx service
+  systemd:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Disable default pool
+  command: mv /etc/php-fpm.d/www.conf /etc/php-fpm.d/www.disabled 
+  args:
+    creates: /etc/php-fpm.d/www.disabled
+  notify: restart php-fpm
+ 
+- name: Copy php-fpm configuration
+  template: 
+    src: wordpress.conf.j2
+    dest: /etc/php-fpm.d/wordpress.conf
+  notify: restart php-fpm
+
+- name: Download and unpack latest WordPress
+  unarchive:
+    src: https://wordpress.org/latest.tar.gz
+    dest: "/mnt/gfs2/{{ server_hostname }}"
+    remote_src: yes
+  run_once: true
+  args:
+    creates: "/mnt/gfs2/{{ server_hostname }}/wordpress"
+
+- name: Set ownership
+  file:
+    path: /mnt/gfs2/"{{ server_hostname }}"
+    state: directory
+    recurse: yes
+    owner: nginx
+    group: nginx
+
+- name: Set up wp-config
+  template:
+    src: wp-config.php.j2
+    dest: "/mnt/gfs2/{{ server_hostname }}/wordpress/wp-config.php"
+
+- name: chown nginx
+  shell: chown -R nginx:nginx /mnt/gfs2/*
+  ignore_errors: yes
+
+- name: Copy nginx configuration for wordpress
+  template: 
+    src: default.conf.j2
+    dest: /etc/nginx/conf.d/default.conf
+  notify: restart nginx
+
+
+

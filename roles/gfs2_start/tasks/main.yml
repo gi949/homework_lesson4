@@ -1,0 +1,79 @@
+---
+
+- name: find target
+  shell: iscsiadm -m discovery -t st -p {{ gfs_ip }}
+
+- name: connection to target
+  shell: iscsiadm -m node -l -T {{ gfs_portal }}
+
+- name: pacemaker cluster configuration (step 1)
+  shell: pcs property set stonith-enabled=false
+  run_once: true
+
+- name: pacemaker cluster configuration (step 2)
+  shell: pcs property set no-quorum-policy=freeze
+  run_once: true
+
+- name: create resource dlm
+  shell: pcs resource create dlm systemd:dlm op monitor interval=30s \
+         on-fail=ignore clone interleave=true ordered=true
+  run_once: true 
+  ignore_errors: yes
+
+- name: create resource clvmd
+  shell: pcs resource create clvmd ocf:heartbeat:clvm op monitor interval=30s \
+         on-fail=ignore clone interleave=true ordered=true
+  run_once: true
+  ignore_errors: yes
+
+- name: create constraint
+  shell: pcs constraint order start dlm-clone then clvmd-clone
+  run_once: true
+  ignore_errors: yes
+
+- name: create pv
+  shell: pvcreate /dev/sda
+  run_once: true
+  ignore_errors: yes
+
+- name: create cluster_vg 
+  shell: vgcreate -Ay -cy cluster_vg  /dev/sda
+  run_once: true
+  ignore_errors: yes
+
+- name: create lcluster_lv
+  shell: lvcreate -l100%FREE -n lcluster_lv cluster_vg
+  run_once: true
+  ignore_errors: yes
+
+- name: create fs
+  shell: mkfs.gfs2 -j3 -p lock_dlm -O -t otuscluster:gfs2 /dev/cluster_vg/lcluster_lv
+  run_once: true
+  ignore_errors: yes
+
+- name: create resource clusterfs
+  shell: pcs resource create clusterfs Filesystem device="/dev/cluster_vg/lcluster_lv" \
+         directory="/mnt/gfs2" fstype="gfs2" "options=noatime" op \
+         monitor interval=10s on-fail=ignore clone interleave=true
+  run_once: true
+  ignore_errors: yes
+
+- name: create constraint order 
+  shell: pcs constraint order start clvmd-clone then clusterfs-clone
+  run_once: true
+  ignore_errors: yes
+
+- name: create constraint colocation
+  shell: pcs constraint colocation add clusterfs-clone with clvmd-clone
+  run_once: true
+  ignore_errors: yes
+
+- name: resource check
+  shell: ls /mnt/gfs2
+
+- name: resource check
+  shell: echo test > /mnt/gfs2/test
+  run_once: true
+
+- name: resource check
+  shell: cat /mnt/gfs2/test

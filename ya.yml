@@ -1,0 +1,18 @@
+[lb]
+lb1 ansible_host=
+lb2 ansible_host=
+
+[bs]
+bs1 ansible_host=
+bs2 ansible_host=
+
+[db]
+db1 ansible_host=
+
+[fs]
+gfs ansible_host=
+
+[web]
+bs1
+bs2
+

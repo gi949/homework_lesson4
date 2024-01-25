@@ -1,0 +1,18 @@
+wp_db_name: wordpress 
+wp_db_user: wordpress
+wp_db_password: XvDcVTcRHrsX
+wp_db_host: 
+server_hostname: www.example.com
+
+auto_up_disable: false
+core_update_level: true
+
+gfs_ip: 
+gfs_portal: iqn.2023-12.ru.otus:storage.target00
+
+node1_ip: 
+node2_ip: 
+node1_ipe: 
+node2_ipe: 
+pcs_password: "hacluster_123"
+
