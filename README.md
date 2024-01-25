@@ -54,11 +54,21 @@ ansible-playbook --syntax-check main.yaml
 Роль gfs2_start выполняет настройку ФС gfs2 на bs1 и bs2
 
 Роль db_ins выполняет установку и рзвертывание mysql 
+
 Роль bs_ins выполняет установку и рзвертывание php-fpm, nginx и wordpress 
+
 Роль web_ins выполняет настройку балансировщика с nginx
 
 Запускаем playbook на выполнение
 
 ansible-playbook main.yaml
 
+Для проверки в /etc/hosts своей ВМ прописываем:
+external_ip_address Yandex Network Load Balancer www.example.com
+
+В браузере проверяем доступность wordpress введя www.example.com
+
+Для проверки отключаем nginx или php-fpm на ВМ.
+
+Проверяем доступность сайта по адресу www.example.com
 
